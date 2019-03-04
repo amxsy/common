@@ -1,0 +1,30 @@
+window.ejs=function (templateTxt,data) { 
+    return create(templateTxt).call(data);
+       
+	// function template() {          
+ //        return null; }  
+ //    }; 
+function create(template){   
+	var reg = /\s+/gm;      
+	template=template.replace(reg," ");     
+	reg=/(<%[\s])=/gm;      
+	template=template.replace(reg,"<%=");   
+	//删除各种特殊字符；    
+	reg=/[\n\f\r\t\v]/gim;          
+	template=template.replace(reg,"");      
+	reg=/("|')/g;   
+	template=template.replace(reg,"\\$1");          
+	reg=/<%((?!(<%)|(%>)).)+%>/g;                           
+	var match=template.match(reg);          
+	var start=0,end=0,word="",temWord="",str="var str='';";                 
+	while(word=match.shift()){
+		end=template.indexOf(word);             
+		str+="str+=\""+template.substr(start,end)+"\";";
+        end=end+word.length;
+        word=word.replace(/<%=(.*)%>/g,"str+=$1;").replace(/<%(.*)%>/g,"$1");           
+        str+=word;              
+        template=template.substr(end);  }
+        str+="str+=\""+template+"\";return str;";
+        return new Function(str); 
+    }
+}
