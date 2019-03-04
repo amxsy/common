@@ -1,0 +1,23 @@
+var fs=require('fs'); 
+var promise=require('promise');
+var pfs=exports=module.exports={};
+var pmaker=(file,ops,func)=>{ 	
+	return new promise((resolve,reject)=>{
+		func(file,ops,(err,data)=>{
+			if(!err)
+				resolve(data);
+			else
+				reject();
+		}); 
+	}); 
+};  
+pfs.access=(file,ops)=>{
+	return pMaker(file,ops,fs.access);
+}; 
+pfs.readFile=(file,ops)=>{
+	return pMaker(file,ops,fs.readFile);
+}; 
+pfs.readdir=(file,ops)=>{
+	return pMaker(file,ops,fs.readdir);
+}; 
+	
