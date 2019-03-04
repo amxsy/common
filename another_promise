@@ -1,0 +1,87 @@
+//var promise=require('promise');
+
+function promise(func) {
+	this.queue=[];
+	process.nextTick(()=>{
+		var handler=this.queue.shift();
+		func(handler.res,handler.rej);});	
+}
+
+promise.prototype.then=function (resolve,reject) {
+	var handler={};
+	handler.res=(args)=>{
+		var p=resolve(args);
+		if(p)					
+			p.queue=this.queue;			
+	};
+	handler.rej=(args)=>{
+		var p=reject(args);
+		if(p)										
+			p.queue=this.queue;			
+	};
+	this.queue.push(handler);
+	return this;
+}
+
+
+
+
+
+//示例
+var path=require('path');
+var fs=require('fs');
+
+var p=path.join(__dirname);
+
+
+
+
+function ttry(name) {
+
+	var o=new promise((resolve,reject)=>{
+
+		fs.access(name,(err)=>{
+			console.log(name);
+			if(!err)
+			{
+				console.log("对象存在，但不知是何物，需继续弄清！");
+				resolve(name);
+			}
+			else
+				console.log('file is not exist!');
+		});
+	});
+	console.log("first:",o);
+	o=o.then((name)=>{
+		console.log("is executing!");
+		return new promise((resolve,reject)=>{
+			fs.readFile(name,(err,data)=>{
+				if(!err)
+					return resolve(data);
+				else
+					return reject(name);
+			});
+		});
+	},null);
+	console.log("second:",o);
+	o=o.then((data)=>{
+			console.log(data);
+		},
+		(name)=>{
+			return new promise((resolve,reject)=>{
+				fs.readdir(name,(err,data)=>{
+					if(!err)
+						resolve(data);					
+			});
+		});
+	});
+
+	o=o.then((data)=>{
+		if(data.length>0)
+			data.forEach((item)=>{
+				console.log(item);
+			});
+	});
+}
+
+ttry(path.join(__dirname,"node_modules","raw-body","node_modules"));
