@@ -1,0 +1,54 @@
+var http=require('http');
+var fs=require('fs');
+var path=require('path');
+var files=[];
+var n=0,host="192.168.1.11";
+var req=http.request({host:host,path:"/",port:88});
+req.setHeader('Content-Type', 'text/plain');
+req.end();
+var _data="";
+req.once('response',(res)=>{
+
+	var eres=(data)=>{_data+=data;};
+	res.setEncoding('utf8');
+	res.on("data",eres);
+	res.once("end",()=>{		
+		files=JSON.parse(_data);
+		files.forEach((file)=>{console.log(file);});
+		res.removeListener("data",eres);
+
+		next();
+	});
+});
+
+function next() {
+	if(n==files.length)
+			return;
+	var file=path.join(__dirname,files[n]);
+	if(fs.existsSync(file))
+		{
+			next(n++);
+			return;
+		}
+	var dir=path.dirname(file);
+	if(!fs.existsSync(dir))
+		fs.mkdirSync(dir,{recursive:true});
+
+	console.log("preencode:",files[n]);
+	var encode=encodeURI(files[n++]);
+	console.log("encode:",encode);
+	var ops={host:host,path:encode,port:88};
+		var req=http.request(ops);
+		
+	req.end();
+	req.once('response',(res)=>{
+		var s=fs.createWriteStream(file);		
+		res.pipe(s,{end:false});
+		res.once("end",()=>{
+			s.end();
+			next();
+		});
+		
+	});
+	
+}
